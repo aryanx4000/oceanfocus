@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OceanFocus</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-sidebar: #151f32;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --success: #10b981;
+            --border: #334155;
+            --sidebar-width: 280px;
+        }
+        * { 
+            box-sizing: border-box;
+            margin: 0; padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main); 
+            min-height: 100vh; 
+            display: flex; 
+        }
+        
+        #two{ color: mediumpurple; }
+
+       .app-container{ 
+            display: flex;
+            width: 100%; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+       .sidebar { 
+            background-color: var(--bg-sidebar);
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            border-right: 1px solid var(--border);
+            display: flex; 
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5rem 1rem;
+        }
+       .category-list {
+            list-style: none;
+            display: flex;       
+            flex-direction: column;
+            gap: 0.35rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+       .category-item { 
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 8px; 
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+       .category-item:hover { 
+            background-color: rgba(255,255,255,0.05);
+            color: var(--text-main);
+        }
+       .category-item.active { 
+            background-color: rgba(99,102,241,0.15);
+            color: #a5b4fc;
+            border-left: 3px solid var(--accent);
+        }
+       .category-icon { 
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+       .btn-add-category { 
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: 1px dashed var(--border);
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-weight: 500;
+            margin-top: 1rem;
+            width: 100%;
+        }
+       .btn-add-category:hover {
+            border-color: var(--accent);
+            color: var(--text-main);
+            background-color: rgba(99,102,241,0.05); 
+        }
+       .main-screen {
+            flex: 1; 
+            padding: 2.5rem 3rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column; 
+            gap: 2rem; 
+        }
+       .main-header h1 { 
+            font-size: 2.2rem;
+            font-weight: 800; 
+            letter-spacing: -0.04em; 
+            margin-bottom: 0.25rem;
+        }
+       .main-header p { 
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+       .workspace-grid { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 2rem;
+        }
+        @media (min-width: 1200px) {
+            .workspace-grid {
+                 grid-template-columns: 1fr 1.2fr;
+                }
+        }
+       .card { 
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+       .card h2 { 
+            font-size: 1.15rem;
+            margin-bottom: 1.2rem;
+            border-bottom: 1px solid var(--border); 
+            padding-bottom: 0.5rem;
+        }
+       .form-row { 
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem; 
+            margin-bottom: 1.25rem;
+        }
+        @media (min-width: 480px){
+            .form-row {
+                grid-template-columns: 1fr 1fr;
+            } 
+        }
+       .form-group { margin-bottom: 1.25rem; }
+
+       .form-group label {
+            display: block;
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+       .form-group input[type="text"] {
+             width: 100%; 
+             padding: 0.75rem; 
+             background-color: var(--bg-primary); 
+             border: 1px solid var(--border); 
+             border-radius: 6px; 
+             color: var(--text-main); 
+             font-size: 0.95rem; 
+        }
+       .form-group input[type="text"]:focus {
+            outline: none; 
+            border-color: var(--accent); 
+        }
+       .range-container { 
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+       .range-container input[type="range"] {
+             flex: 1; 
+             accent-color: var(--accent);
+        }
+       .range-value { 
+            font-size: 0.9rem;
+            font-weight: bold;
+            min-width: 1rem; 
+        }
+        button.btn-submit { 
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--accent);
+            color: white;
+            border: none; 
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button.btn-submit:hover { background-color: var(--accent-hover); }
+
+       .focus-zone { 
+            display: flex;
+            flex-direction: column; 
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: 240px;
+            border: 2px dashed var(--border);
+            background-color: rgba(30,41,59,0.3);
+            margin-bottom: 2rem; 
+        }
+       .focus-active { 
+            border: 2px solid var(--accent);
+            background-color: var(--bg-surface);
+        }
+       .focus-title { 
+            font-size: 1.75rem; 
+            font-weight: 700; 
+            margin-bottom: 0.75rem; 
+        }
+       .focus-meta {
+            font-size: 0.875rem; 
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+       .badge { 
+            background-color: rgba(99,102,241,0.15);
+            color: #a5b4fc;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(99,102,241,0.3);
+        }
+       .btn-complete { 
+            background-color: var(--success);
+            max-width: 180px;
+            color: white;
+        }
+       .btn-complete:hover { background-color: #059669; }
+
+       .queue-list { list-style: none; }
+
+       .queue-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            background-color: var(--bg-primary); 
+            border: 1px solid var(--border);
+            border-radius: 6px; 
+            margin-bottom: 0.5rem; 
+        }
+       .breaker{ border: 1px solid white; }
+
+       .container{
+            background:rgba(255,255,255,0.1);
+            backdrop-filter:blur(20px);
+            padding:40px;
+            border-radius:25px;
+            text-align:center;
+            box-shadow:0 20px 60px rgba(0,0,0,0.3);
+            position:fixed;
+            top:50%; 
+            left:50%;
+            transform:translate(-50%,-50%);
+            z-index:1000;
+            display:none; 
+            margin-right:auto;
+        }
+        #time{
+            font-size:80px;
+            font-weight:700;
+            margin:30px 0;
+            letter-spacing:5px;
+        }
+       .mode{
+            font-size:20px;
+            margin-bottom:20px;
+            opacity:0.9;
+        }
+        input{ 
+            padding:12px 20px;
+            font-size:18px;
+            border:none;
+            border-radius:12px;
+            width:120px;
+            text-align:center;
+            margin-right:10px;
+            background:rgba(255,255,255,0.9);color:#333;
+        }
+        button{ 
+            padding:12px 25px;
+            font-size:16px;
+            border:none;
+            border-radius:12px;
+            background:#fff;color:#667eea;
+            font-weight:600;
+            cursor:pointer;
+            margin:5px;
+            transition:0.2s;
+        }
+        button:hover{transform:scale(1.05)} 
+
+        button:disabled{opacity:0.5;cursor:not-allowed}
+
+       .set-time{margin-bottom:20px}
+
+       .workspace-section{
+            padding:30px;
+            flex:1; 
+            overflow-y:auto;
+            display:none;
+        }
+       .notes-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:25px;
+        }
+       .notes-header h2{
+            color:#60a5fa;
+            font-size:28px;
+        }
+       .new-note-btn{ 
+            padding:12px 22px;
+            background:linear-gradient(90deg,#3b82f6,#8b5cf6); 
+            border:none;
+            border-radius:12px;
+            color:#fff;
+            font-weight:600;
+            cursor:pointer;
+            transition:0.2s;
+            box-shadow:0 5px 20px rgba(59,130,246,0.4);
+        }
+       .new-note-btn:hover{transform:translateY(-2px)}
+
+       .notes-layout{
+            display:grid;
+            grid-template-columns:300px 1fr;
+            gap:20px;
+            height:calc(100vh - 180px);
+        }
+       .notes-sidebar{ 
+            background:rgba(30,41,59,0.6);
+            border-radius:16px;
+            padding:15px; 
+            border:1px solid rgba(148,163,184,0.2);
+            display:flex;
+            flex-direction:column;
+        }
+        #searchNote{ 
+            padding:12px;
+            border-radius:10px;
+            border:1px solid rgba(148,163,184,0.3);
+            background:rgba(15,23,42,0.8);
+            color:#e2e8f0;
+            margin-bottom:15px;
+            outline:none;
+        }
+       .note-item{ 
+            padding:12px;
+            border-radius:10px;
+            margin-bottom:8px;
+            cursor:pointer;
+            background:rgba(15,23,42,0.4);
+            transition:0.2s;
+            border-left:3px solid transparent;
+         }
+       .note-item:hover{background:rgba(59,130,246,0.2)}
+
+       .note-item.active{
+            background:rgba(59,130,246,0.3);
+            border-left:3px solid #3b82f6;
+        }
+       .note-item h4{
+            color:#e2e8f0;
+            font-size:15px;
+            margin-bottom:4px;
+        }
+        .note-item p{
+            color:#94a3b8;
+            font-size:12px;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        }   
+       .notes-editor{ 
+            background:rgba(30,41,59,0.6);
+            border-radius:16px;padding:20px;
+            border:1px solid rgba(148,163,184,0.2);
+            display:flex;
+            flex-direction:column;
+        }
+        #noteTitle{ 
+            padding:15px;
+            font-size:20px;
+            font-weight:600;
+            border:none;
+            border-radius:10px;
+            background:rgba(15,23,42,0.8);
+            color:#e2e8f0;
+            margin-bottom:15px;
+            outline:none;
+        }
+        #noteContent{ 
+            flex:1;
+            padding:15px;
+            font-size:15px;
+            line-height:1.6;
+            border:none;
+            border-radius:10px;
+            background:rgba(15,23,42,0.8);
+            color:#e2e8f0;
+            resize:none;
+            outline:none;
+            font-family:'Poppins',sans-serif;
+        }
+       .editor-footer{
+            display:flex;
+            justify-content:space-between;
+            margin-top:15px;
+            color:#94a3b8;
+            font-size:13px;
+        }
+       .delete-btn{
+            padding:8px 16px;
+            background:#ef4444;
+            border:none;
+            border-radius:8px;
+            color:#fff;
+            cursor:pointer;
+        }
+        @media(max-width:768px){
+            .notes-layout{
+                grid-template-columns:1fr;
+                height:auto
+            }
+            .notes-sidebar{height:200px}
+         }
+    .sidebar-footer .btn-add-category{
+        margin-top:8px;
+        
+
+    } 
+    #aichat{
+        height: 60px;
+        width: 100px;
+        border-bottom-left-radius: 20px;
+        background: #3b82f6;
+        position: absolute;
+        right: 10px;
+        bottom: 20px;
+        color: white;
+        padding: 0 10px 0px 8px;   
+        transition: 0.3s;
+    }
+    #aichat:hover{
+        background: mediumslateblue;
+        
+    }
+
+    .category-list{max-height:none;} 
+</style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div>
+                <nav>
+                    <ul class="category-list" id="categoryList">
+                        <li class="category-item active" onclick="switchCategory('Study')"><span class="category-icon">📚</span>Study</li>
+                        <li class="category-item" onclick="switchCategory('Work')"><span class="category-icon">💼</span>Work</li>
+                        <li class="category-item" onclick="switchCategory('Personal')"><span class="category-icon">🏠</span>Personal</li>
+                        <li class="category-item" onclick="switchCategory('Fitness')"><span class="category-icon">🏃‍♂️</span>Fitness</li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="sidebar-footer" style="padding-top:12px; border-top:1px solid var(--border); margin-top:12px;">
+                <button class="btn-add-category" id="mindspace"><span style="font-size: 1.2rem; font-weight: bold;">📝</span>
+                    <span>Open Notes</span>
+                </button>
+            <button class="btn-add-category" id="timerBtn">
+                <span style="font-size: 1.2rem; font-weight: bold;">🧠</span>
+                <span>Mindspace Timer</span>
+            </button>
+            <button class="btn-add-category" id="btnAddCategory">
+                <span style="font-size: 1.2rem; font-weight: bold;">+</span>
+                <span>Add Workspace</span>
+            </button>
+        </div>
+        </aside>
+
+        <div id="notesSection" class="workspace-section">
+          <div class="notes-header">
+            <h2>📝 My Notes Vault</h2>
+            <div>
+                <button class="new-note-btn" onclick="createNewNote()">+ New Note</button>
+                <button class="new-note-btn" style="background:#334155;box-shadow:none" onclick="closeNotes()">Close</button>
+            </div>
+          </div>
+          <div class="notes-layout">
+            <div class="notes-sidebar">
+              <input type="text" id="searchNote" placeholder="Search notes..." oninput="searchNotes()">
+              <div id="notesList"></div>
+            </div>
+            <div class="notes-editor">
+              <input type="text" id="noteTitle" placeholder="Note Title..." oninput="saveCurrentNote()">
+              <textarea id="noteContent" placeholder="Start typing..." oninput="saveCurrentNote()"></textarea>
+              <div class="editor-footer">
+                <span id="noteInfo">Last saved: Never</span>
+                <button class="delete-btn" onclick="deleteNote()">🗑 Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <main class="main-screen">
+            <header class="main-header">
+                <h1 style="text-align: center;">OceanFocus</h1>
+                <div class="breaker"></div>
+                <h1 id="currentCategoryTitle">Study</h1>
+                <p id="two">Task processing framework for this sector.</p>
+            </header>
+            <div class="workspace-grid">
+                <div>
+                    <section class="card">
+                        <h2>Brain Dump New Task</h2>
+                        <form id="taskForm">
+                            <div class="form-group">
+                                <label for="taskName">What objective requires execution?</label>
+                                <input type="text" id="taskName" placeholder="e.g., Read documentation data metrics" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="importance">Importance (1-10)</label>
+                                    <div class="range-container">
+                                        <input type="range" id="importance" min="1" max="10" value="5">
+                                        <span class="range-value" id="importanceVal">5</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="urgency">Urgency (1-10)</label>
+                                    <div class="range-container">
+                                        <input type="range" id="urgency" min="1" max="10" value="5">
+                                        <span class="range-value" id="urgencyVal">5</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-submit">Inject Into Target Pool</button>
+                        </form>
+                    </section>
+                </div>
+                <div>
+                    <section class="card focus-zone" id="focusZone">
+                        <div id="emptyState">
+                            <p style="color: var(--text-muted); max-width: 280px; line-height: 1.5; font-size: 0.95rem;">No running mandates computed for this specific category block. Add tasks above.</p>
+                        </div>
+                        <div id="activeState" style="display: none; width: 100%;">
+                            <p style="text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.15em; color: var(--accent); font-weight: 700; margin-bottom: 0.5rem;">Current Top Mandate</p>
+                            <div class="focus-title" id="currentTaskTitle">Task Target</div>
+                            <div class="focus-meta">
+                                <span class="badge" id="currentTaskPriority">Score: 0</span>
+                                <span style="color: var(--text-muted);" id="currentTaskBreakdown">(I: 0 | U: 0)</span>
+                            </div>
+                            <button class="btn-complete" id="btnComplete">Task Complete</button>
+                        </div>
+                    </section>
+                    <section class="card">
+                        <h2>Category Pipeline Queue (<span id="queueCount">0</span>)</h2>
+                        <ul class="queue-list" id="queueList">
+                            <li style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 1rem;">Queue empty.</li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="container">
+      <h1>🧠 Mindspace Timer</h1>
+      <div class="mode" id="mode">Set Focus Time</div>
+      <div class="set-time" id="setTimeBox">
+        <input type="number" id="minInput" placeholder="Minutes" min="1" max="120" value="25">
+        <button id="setBtn">Set & Start</button>
+      </div>
+      <div id="time">25:00</div>
+      <div>
+        <button id="start">Start</button>
+        <button id="pause">Pause</button>
+        <button id="reset">Reset</button>
+        <button id="closeTimer">Close</button>
+      </div>
+      <div class="sessions">Sessions: <span id="count">0</span></div>
+    </div>
+
+    <button id="aichat">Chat</button>
+    
+    
+    <script>
+
+        let currentUser = 'guest';
+        let mindspacesec = document.querySelector('.container');
+        let taskDatabase = {
+            'Study': [],
+            'Work': [],
+            'Personal': [],
+            'Fitness': []
+        };
+        let currentCategory = 'Study';
+        const categoryList = document.getElementById('categoryList');
+        const btnAddCategory = document.getElementById('btnAddCategory');
+        const currentCategoryTitle = document.getElementById('currentCategoryTitle');
+        const taskForm = document.getElementById('taskForm');
+        const taskNameInput = document.getElementById('taskName');
+        const importanceInput = document.getElementById('importance');
+        const urgencyInput = document.getElementById('urgency');
+        const importanceVal = document.getElementById('importanceVal');
+        const urgencyVal = document.getElementById('urgencyVal');
+        const queueList = document.getElementById('queueList');
+        const queueCount = document.getElementById('queueCount');
+        const focusZone = document.getElementById('focusZone');
+        const emptyState = document.getElementById('emptyState');
+        const activeState = document.getElementById('activeState');
+        const currentTaskTitle = document.getElementById('currentTaskTitle');
+        const currentTaskPriority = document.getElementById('currentTaskPriority');
+        const currentTaskBreakdown = document.getElementById('currentTaskBreakdown');
+        const btnComplete = document.getElementById('btnComplete');
+
+        importanceInput.addEventListener('input', (e) => importanceVal.textContent = e.target.value);
+        urgencyInput.addEventListener('input', (e) => urgencyVal.textContent = e.target.value);
+
+        btnAddCategory.addEventListener('click', () => {
+            const catName = prompt("Enter new workspace/work category name:");
+            if (!catName || catName.trim() === "") return;
+            const cleanName = catName.trim();
+            if (taskDatabase[cleanName]){
+                alert("This category structure already exists!"); return; 
+            }
+            taskDatabase[cleanName] = [];
+            const li = document.createElement('li');
+            li.className = 'category-item';
+            li.setAttribute('onclick', `switchCategory('${cleanName}')`);
+            li.innerHTML = `<span class="category-icon">📁</span>${cleanName}`;
+            const deletebtn = document.createElement('button')
+            deletebtn.textContent = "X";
+            deletebtn.style.marginLeft = "auto";
+            deletebtn.style.background = "#151f32";
+            deletebtn.style.color = "white";
+            deletebtn.style.border = "1px solid white";
+            deletebtn.style.borderRadius = "5px";
+            deletebtn.style.padding = "4px 8px";
+            deletebtn.style.cursor = "pointer";
+            deletebtn.addEventListener('click',(e)=>{
+                e.stopPropagation();
+                li.remove();
+                delete taskDatabase[cleanName];
+                if(currentCategory === cleanName) switchCategory('Study');
+            })
+            
+            li.appendChild(deletebtn);
+            categoryList.appendChild(li);
+        });
+
+        function switchCategory(categoryName){
+        
+        document.getElementById('notesSection').style.display = 'none';
+        document.querySelector('.main-screen').style.display = 'flex';
+        currentCategory = categoryName;
+        currentCategoryTitle.textContent = categoryName;
+        const items = document.querySelectorAll('.category-item');
+        items.forEach(item =>{
+            if(item.textContent.includes(categoryName)){
+                item.classList.add('active');
+            }
+            else{
+                item.classList.remove('active');
+            }
+        });
+        updateMainScreenUI();
+        }
+
+        taskForm.addEventListener('submit', (e) =>{
+            e.preventDefault();
+            const name = taskNameInput.value.trim();
+            const importance = parseInt(importanceInput.value);
+            const urgency = parseInt(urgencyInput.value);
+            const score = importance * urgency;
+            taskDatabase[currentCategory].push({ id: Date.now(), name, importance, urgency, score });
+            taskDatabase[currentCategory].sort((a, b) => b.score - a.score);
+            taskForm.reset(); importanceVal.textContent = '5'; urgencyVal.textContent = '5';
+            updateMainScreenUI();
+        });
+
+        btnComplete.addEventListener('click', () =>{
+            taskDatabase[currentCategory].shift(); updateMainScreenUI();
+        });
+
+        function updateMainScreenUI() {
+            const currentTasks = taskDatabase[currentCategory] || [];
+            queueCount.textContent = currentTasks.length;
+            queueList.innerHTML = '';
+            const trailingQueue = currentTasks.slice(1);
+            if (trailingQueue.length === 0){
+                queueList.innerHTML = '<li style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 1rem;">Queue empty.</li>';
+            }
+            else {
+                trailingQueue.forEach(task => {
+                    const li = document.createElement('li');
+                    li.className = 'queue-item';
+                    li.innerHTML = `<span style="font-weight:500;">${task.name}</span><span style="color:var(--text-muted); font-size:0.85rem;">Score: ${task.score}</span>`;
+                    queueList.appendChild(li);
+                });
+            }
+            if (currentTasks.length > 0) {
+                emptyState.style.display = 'none'; activeState.style.display = 'block'; focusZone.classList.add('focus-active');
+                currentTaskTitle.textContent = currentTasks[0].name;
+                currentTaskPriority.textContent = `Priority: ${currentTasks[0].score}`;
+                currentTaskBreakdown.textContent = `(I: ${currentTasks[0].importance} · U: ${currentTasks[0].urgency})`;
+            } 
+            else {
+                emptyState.style.display = 'block'; activeState.style.display = 'none'; focusZone.classList.remove('focus-active');
+            }
+        }
+
+        let mindspace = document.getElementById("mindspace");
+        mindspace.onclick = function(){
+            document.querySelector('.main-screen').style.display = 'none';
+            document.getElementById('notesSection').style.display = 'block';
+            loadNotes();
+        }
+        function closeNotes(){
+            document.getElementById('notesSection').style.display='none'; 
+            document.querySelector('.main-screen').style.display='flex';
+        }
+
+        document.getElementById('timerBtn').onclick = ()=> mindspacesec.style.display='block';
+        const timeEl = document.getElementById('time'); 
+        const modeEl = document.getElementById('mode');
+        const countEl = document.getElementById('count');
+        const minInput = document.getElementById('minInput');
+        const setBtn = document.getElementById('setBtn');
+        const setTimeBox = document.getElementById('setTimeBox');
+        const startBtn = document.getElementById('start');
+        const pauseBtn = document.getElementById('pause');
+        const resetBtn = document.getElementById('reset');
+        const closeTimer = document.getElementById('closeTimer');
+        let focusTime = 25 * 60; 
+        let breakTime = 5 * 60;
+        let timeLeft = focusTime;
+        let isFocus = true; 
+        let timer = null; 
+        let isRunning = false; 
+        let sessions = 0;
+        function updateDisplay(){
+            let min = Math.floor(timeLeft / 60); 
+            let sec = timeLeft % 60; 
+            timeEl.textContent = `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`; 
+        }
+        function start(){ 
+            if(!isRunning){ 
+                isRunning = true
+                ; setTimeBox.style.display = 'none'; 
+                startBtn.disabled = true; 
+                timer = setInterval(() => { 
+                    timeLeft--; updateDisplay(); 
+                    if(timeLeft <= 0) { 
+                        clearInterval(timer); 
+                        isRunning = false; 
+                        startBtn.disabled = false; 
+                        if(isFocus) { 
+                            sessions++; localStorage.setItem('sessions', sessions); 
+                            countEl.textContent = sessions; 
+                            isFocus = false; 
+                            timeLeft = breakTime; 
+                            modeEl.textContent = 'Break Time - Relax 😌'; 
+                        } 
+                        else { 
+                            isFocus = true; 
+                            timeLeft = focusTime; 
+                            modeEl.textContent = 'Focus Mode - !Concentrate!📚'; 
+                        } 
+                        start(); 
+                    } }, 1000); } }
+        function pause() { 
+            clearInterval(timer); 
+            isRunning = false; 
+            startBtn.disabled = false; 
+        }
+    function reset() { 
+        pause(); i
+        sFocus = true; 
+        timeLeft = focusTime; 
+        modeEl.textContent = 'Focus Mode - 1Concentate1 📚'; 
+        setTimeBox.style.display = 'block'; 
+        startBtn.disabled = false; 
+        updateDisplay(); 
+    }
+    function setTime() { 
+        let mins = parseInt(minInput.value); 
+        if(mins > 0 && mins <= 120) { 
+            focusTime = mins * 60; timeLeft = focusTime; 
+            updateDisplay(); 
+            modeEl.textContent = `Focus Mode - ${mins} min set 📚`; } 
+            else {
+                alert('Set between 1-120'); 
+            } 
+        }
+    setBtn.onclick = setTime; 
+    startBtn.onclick = start; 
+    pauseBtn.onclick = pause; 
+    resetBtn.onclick = reset; 
+    closeTimer.onclick = ()=> mindspacesec.style.display='none';
+    sessions = localStorage.getItem('sessions') || 0; 
+    countEl.textContent = sessions; 
+    updateDisplay();
+
+    let notes = []; 
+    let currentNoteId = null;
+    function loadNotes() { 
+        notes = JSON.parse(localStorage.getItem(currentUser + '_notes') || '[]'); 
+        if(notes.length === 0) { 
+            createNewNote(); } 
+            else { 
+                renderNotesList(); openNote(notes[0].id); 
+            } 
+    }
+    function createNewNote() { 
+        const newNote = { 
+            id: Date.now(), title: 'Untitled Note', content: '', created: new Date().toISOString(), updated: new Date().toISOString() }; 
+            notes.unshift(newNote); 
+            saveNotesToStorage(); 
+            renderNotesList(); 
+            openNote(newNote.id); 
+    }
+    function renderNotesList() { const list = document.getElementById('notesList'); list.innerHTML = ''; notes.forEach(note => { const div = document.createElement('div'); div.className = 'note-item' + (note.id === currentNoteId? ' active' : ''); div.onclick = () => openNote(note.id); const preview = note.content.substring(0, 40) || 'No content...'; const date = new Date(note.updated).toLocaleDateString('en-IN'); div.innerHTML = `<h4>${note.title}</h4><p>${preview} • ${date}</p>`; list.appendChild(div); }); }
+    function openNote(id) { 
+        currentNoteId = id; 
+        const note = notes.find(n => n.id === id); 
+        if(!note) return; 
+        document.getElementById('noteTitle').value = note.title; 
+        document.getElementById('noteContent').value = note.content; 
+        updateNoteInfo(note.updated); 
+        renderNotesList(); 
+    }
+    function saveCurrentNote() { 
+        if(!currentNoteId) return; 
+        const note = notes.find(n => n.id === currentNoteId); note.title = document.getElementById('noteTitle').value || 'Untitled Note'; 
+        note.content = document.getElementById('noteContent').value; 
+        note.updated = new Date().toISOString(); 
+        saveNotesToStorage(); renderNotesList(); 
+        updateNoteInfo(note.updated); 
+    }
+    function saveNotesToStorage() { 
+        localStorage.setItem(currentUser + '_notes', JSON.stringify(notes)); 
+    }
+    function deleteNote() { 
+        if(!currentNoteId ||!confirm('Delete this note Sure?')) return; 
+        notes = notes.filter(n => n.id!== currentNoteId); 
+        saveNotesToStorage(); 
+        currentNoteId = null; 
+        if(notes.length > 0) openNote(notes[0].id); 
+        else { 
+            document.getElementById('noteTitle').value = ''; 
+            document.getElementById('noteContent').value = ''; 
+            renderNotesList(); 
+        } }
+    function searchNotes() { 
+        const query = document.getElementById('searchNote').value.toLowerCase(); 
+        const filtered = notes.filter(n => n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)); 
+        const list = document.getElementById('notesList'); 
+        list.innerHTML = ''; filtered.forEach(note => {
+            const div = document.createElement('div'); 
+            div.className = 'note-item' + (note.id === currentNoteId? ' active' : ''); 
+            div.onclick = () => openNote(note.id); div.innerHTML = `<h4>${note.title}</h4><p>${note.content.substring(0,40)}...</p>`; 
+            list.appendChild(div);
+        });
+    }
+    function updateNoteInfo(timestamp) { 
+        const time = new Date(timestamp); 
+        const now = new Date(); 
+        const diff = Math.floor((now - time) / 1000); 
+        let text = 'Just now'; 
+        if(diff > 60) text = Math.floor(diff/60) + ' min ago'; 
+        if(diff > 3600) text = Math.floor(diff/3600) + ' hr ago'; document.getElementById('noteInfo').textContent = 'Last saved: ' + text; 
+    }
+    updateMainScreenUI();
+
+    
+</script>
+</body>
+</html>
