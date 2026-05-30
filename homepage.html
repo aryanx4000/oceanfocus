@@ -811,6 +811,8 @@
             .message { max-width: 90%; }
         }
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -832,6 +834,8 @@
                 <button class="btn-add-category" id="btnAddCategory"><span style="font-size:1.2rem; font-weight:bold;">+</span><span>Add Workspace</span></button>
             </div>
         </aside>
+
+        
 
         <div id="notesSection" class="workspace-section">
             <div class="notes-header">
@@ -923,6 +927,28 @@
                     </section>
                 </div>
             </div>
+
+            <section class="card">
+            <h2>📊 Analytics Dashboard</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:1rem">
+              <div style="background:#0f172a;padding:1rem;border-radius:8px;border:1px solid #334155">
+                <h3 style="font-size:.9rem;color:#94a3b8;margin-bottom:.5rem">Daily Focus Hours</h3>
+                <canvas id="focusChart" height="180"></canvas>
+              </div>
+              <div style="background:#0f172a;padding:1rem;border-radius:8px;border:1px solid #334155">
+                <h3 style="font-size:.9rem;color:#94a3b8;margin-bottom:.5rem">Tasks Done vs Pending</h3>
+                <canvas id="taskChart" height="180"></canvas>
+              </div>
+              <div style="background:#0f172a;padding:1rem;border-radius:8px;border:1px solid #334155">
+                <h3 style="font-size:.9rem;color:#94a3b8;margin-bottom:.5rem">Workspace Usage</h3>
+                <canvas id="workspaceChart" height="180"></canvas>
+              </div>
+              <div style="background:#0f172a;padding:1rem;border-radius:8px;border:1px solid #334155">
+                <h3 style="font-size:.9rem;color:#94a3b8;margin-bottom:.5rem">Weekly Pomodoros</h3>
+                <canvas id="streakChart" height="180"></canvas>
+              </div>
+            </div>
+        </section>
         </main>
     </div>
 
@@ -1059,6 +1085,10 @@
             document.querySelector('.main-screen').style.display = 'flex';
             currentCategory = categoryName;
             currentCategoryTitle.textContent = categoryName;
+            let u = JSON.parse(localStorage.getItem('workspaceUsage')||'{}');
+            u[categoryName]=(u[categoryName]||0)+1;
+            localStorage.setItem('workspaceUsage',JSON.stringify(u));
+            renderAnalytics();
             
             document.querySelectorAll('.category-item').forEach(item => {
                 item.textContent.includes(categoryName) ? item.classList.add('active') : item.classList.remove('active');
@@ -1083,8 +1113,14 @@
         });
 
         btnComplete.addEventListener('click', () => {
+            let done = JSON.parse(localStorage.getItem('completedTasks')||'[]');
+            if(taskDatabase[currentCategory][0]){
+              done.push({name:taskDatabase[currentCategory][0].name,date:new Date().toISOString()});
+              localStorage.setItem('completedTasks',JSON.stringify(done));
+            }
             taskDatabase[currentCategory].shift();
             updateMainScreenUI();
+            renderAnalytics(); // <-- ye add kar
         });
 
         function updateMainScreenUI() {
@@ -1162,6 +1198,14 @@
                         startBtn.disabled = false;
                         if (isFocus) {
                             sessions++;
+                            let today = new Date().toISOString().slice(0,10);
+                            let f = JSON.parse(localStorage.getItem('focusData')||'{}');
+                            f[today] = (f[today]||0) + Math.floor(focusTime/60);
+                            localStorage.setItem('focusData',JSON.stringify(f));
+                            let p = JSON.parse(localStorage.getItem('pomoData')||'{}');
+                            p[today] = (p[today]||0)+1;
+                            localStorage.setItem('pomoData',JSON.stringify(p));
+                            renderAnalytics();
                             localStorage.setItem('sessions', sessions);
                             countEl.textContent = sessions;
                             isFocus = false;
@@ -1467,6 +1511,36 @@
             const container = document.getElementById('messagesContainer');
             container.scrollTop = container.scrollHeight;
         }
+
+        /* ===== ANALYTICS START ===== */
+        let analyticsCharts = {};
+        function renderAnalytics(){
+          // 1. Focus Hours
+          let focusData = JSON.parse(localStorage.getItem('focusData')||'{}');
+          let last7 = [...Array(7)].map((_,i)=>{let d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().slice(0,10)});
+          let focusVals = last7.map(d=>focusData[d]||0);
+        
+          // 2. Tasks
+          let completed = JSON.parse(localStorage.getItem('completedTasks')||'[]').length;
+          let pending = Object.values(taskDatabase).reduce((a,b)=>a+b.length,0);
+        
+          // 3. Workspace
+          let usage = JSON.parse(localStorage.getItem('workspaceUsage')||'{"Study":1,"Work":1,"Personal":1,"Fitness":1}');
+        
+          // 4. Pomodoros
+          let pomo = JSON.parse(localStorage.getItem('pomoData')||'{}');
+          let pomoVals = last7.map(d=>pomo[d]||0);
+        
+          Object.values(analyticsCharts).forEach(c=>c.destroy());
+        
+          analyticsCharts.f = new Chart(document.getElementById('focusChart'),{type:'bar',data:{labels:last7.map(d=>d.slice(5)),datasets:[{data:focusVals,backgroundColor:'#0ea5e9',borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+          analyticsCharts.t = new Chart(document.getElementById('taskChart'),{type:'doughnut',data:{labels:['Done','Pending'],datasets:[{data:[completed,pending],backgroundColor:['#10b981','#334155']}]}});
+          analyticsCharts.w = new Chart(document.getElementById('workspaceChart'),{type:'pie',data:{labels:Object.keys(usage),datasets:[{data:Object.values(usage),backgroundColor:['#6366f1','#3b82f6','#0ea5e9','#8b5cf6']}]}});
+          analyticsCharts.s = new Chart(document.getElementById('streakChart'),{type:'line',data:{labels:last7.map(d=>d.slice(5)),datasets:[{data:pomoVals,borderColor:'#6366f1',tension:.4,fill:true,backgroundColor:'rgba(99,102,241,.2)'}]},options:{plugins:{legend:{display:false}}}});
+        }
+        // Run on load
+        setTimeout(renderAnalytics,500);
+        /* ===== ANALYTICS END ===== */
     </script>
 </body>
 </html>
